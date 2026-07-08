@@ -1,4 +1,4 @@
-name: Terraform Destroy
+name: Terraform Infrastructure Destroy
 
 on:
   workflow_dispatch:
@@ -11,8 +11,12 @@ on:
           - dev
           - prod
 
+permissions:
+  contents: read
+
 jobs:
   terraform-destroy:
+    name: Terraform Destroy
     runs-on: ubuntu-latest
 
     defaults:
@@ -28,20 +32,43 @@ jobs:
         with:
           terraform_version: 1.12.2
 
-      - name: Configure AWS Credentials
+      - name: Show Terraform Version
+        run: terraform version
+
+      # ----------------------------------------
+      # Configure AWS Credentials - DEV
+      # ----------------------------------------
+      - name: Configure AWS Credentials (DEV)
+        if: github.event.inputs.environment == 'dev'
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Set Environment
+      # ----------------------------------------
+      # Configure AWS Credentials - PROD
+      # ----------------------------------------
+      - name: Configure AWS Credentials (PROD)
+        if: github.event.inputs.environment == 'prod'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Verify AWS Account
+        run: aws sts get-caller-identity
+
+      - name: Set Environment Variable
         run: |
           echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
 
-      - name: Show Selected Environment
+      - name: Display Selected Environment
         run: |
-          echo "Destroying environment: $ENV"
+          echo "=========================================="
+          echo "Selected Environment : $ENV"
+          echo "=========================================="
 
       - name: Terraform Init
         run: |
@@ -58,6 +85,20 @@ jobs:
             -var-file=environments/${ENV}.tfvars \
             -out=destroy.tfplan
 
+      - name: Upload Destroy Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: destroy-plan-${{ github.event.inputs.environment }}
+          path: s3-buckets/destroy.tfplan
+
       - name: Terraform Destroy
         run: |
           terraform apply -auto-approve destroy.tfplan
+
+      - name: Destroy Completed
+        run: |
+          echo "=========================================="
+          echo "Terraform Destroy Completed Successfully"
+          echo "Environment : $ENV"
+          echo "=========================================="
+
