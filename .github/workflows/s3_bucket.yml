@@ -74,7 +74,7 @@ jobs:
         run: terraform version
 
       - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+        run: terraform fmt -check -recursive -diff
 
       - name: Terraform Init
         run: |
