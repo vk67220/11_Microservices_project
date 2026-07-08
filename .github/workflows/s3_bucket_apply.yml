@@ -1,4 +1,4 @@
-name: Terraform Infrastructure Deployment
+name: Terraform s3 Bucket creation
 
 on:
   workflow_dispatch:
