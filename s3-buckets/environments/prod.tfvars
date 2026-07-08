@@ -1,7 +1,9 @@
-aws_region   = "us-east-1"
+bucket = "my-eks-terraform-state-302524629943-us-east-1"
 
-bucket1_name = "company-prod-bucket1"
+key = "prod_s3/terraform.tfstate"
 
-bucket2_name = "company-prod-bucket2"
+region = "us-east-1"
 
-environment  = "prod"
+dynamodb_table = "terraform-locks"
+
+encrypt = true

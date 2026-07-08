@@ -1,15 +1,19 @@
 variable "aws_region" {
-  type = string
+  description = "AWS Region"
+  type        = string
 }
 
 variable "bucket1_name" {
-  type = string
+  description = "First S3 Bucket Name"
+  type        = string
 }
 
 variable "bucket2_name" {
-  type = string
+  description = "Second S3 Bucket Name"
+  type        = string
 }
 
 variable "environment" {
-  type = string
+  description = "Environment Name"
+  type        = string
 }
