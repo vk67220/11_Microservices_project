@@ -6,7 +6,7 @@ resource "aws_instance" "this" {
   associate_public_ip_address = true
   key_name                    = var.key_name
 
-  availability_zone = var.availability_zone
+  availability_zone    = var.availability_zone
   iam_instance_profile = var.instance_profile
   # ✅ ONLY THIS
   user_data = file("${path.module}/user_data.sh")

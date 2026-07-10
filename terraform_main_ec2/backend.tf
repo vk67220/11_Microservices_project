@@ -8,7 +8,7 @@ terraform {
 
   backend "s3" {
     bucket         = "cyient-dev-bucket1"
-    key            = "ec2_infra/terraform.tfstate"   # ✅ FIXED
+    key            = "ec2_infra/terraform.tfstate" # ✅ FIXED
     region         = "us-east-1"
     dynamodb_table = "terraform-locks"
     encrypt        = true

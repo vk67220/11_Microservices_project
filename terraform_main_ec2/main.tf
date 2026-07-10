@@ -51,7 +51,7 @@ module "ec2" {
   key_name          = var.key_name
   availability_zone = var.availability_zone[local.env]
   volume_size       = var.volume_size[local.env]
-  instance_profile = module.iam.instance_profile
+  instance_profile  = module.iam.instance_profile
 
-  depends_on = [module.route_table]  # ✅ stability
+  depends_on = [module.route_table] # ✅ stability
 }

@@ -50,7 +50,7 @@ variable "volume_size" {
 variable "ports" {
   type = map(list(number))
   default = {
-    dev  = [22, 80,8080, 8081, 9000]
+    dev  = [22, 80, 8080, 8081, 9000]
     qa   = [22, 80]
     prod = [22, 80, 8080, 8081, 9000, 5432]
   }
