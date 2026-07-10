@@ -1,0 +1,76 @@
+name: Terraform Apply (Workspace)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select Environment"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  terraform:
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: terraform_main_ec2
+
+    env:
+      ENV: ${{ github.event.inputs.environment }}
+
+    steps:
+      # 🔹 Checkout
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 🔹 Debug
+      - name: Print Environment
+        run: echo "Running for $ENV"
+
+      # 🔹 Terraform Version
+      - name: Check Terraform Version
+        run: terraform -version
+
+      # 🔹 AWS CLI
+      - name: Check AWS CLI Version
+        run: aws --version
+
+      # 🔹 AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # 🔹 Init
+      - name: Terraform Init
+        run: terraform init
+
+      # 🔹 Workspace Select/Create
+      - name: Select or Create Workspace
+        run: |
+          terraform workspace select $ENV || terraform workspace new $ENV
+          terraform workspace list
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      # 🔹 Validate
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 🔹 Plan
+      - name: Terraform Plan
+        run: terraform plan
+
+      # 🔹 Apply
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        #run: terraform apply -replace="module.ec2.aws_instance.this" -auto-approve

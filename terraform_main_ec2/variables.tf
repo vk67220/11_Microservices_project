@@ -1,87 +1,57 @@
+variable "aws_region" { type = string }
+variable "ami" { type = string }
+variable "key_name" { type = string }
 
-variable "region" {
-  description = "AWS region"
-  type = string
-  default = "us-east-1"
+variable "vpc_cidr" {
+  type = map(string)
+  default = {
+    dev  = "10.0.0.0/16"
+    qa   = "10.1.0.0/16"
+    prod = "10.2.0.0/16"
+  }
 }
 
-variable "vpc-name" {
-  description = "VPC Name for our Jumphost server"
-  type = string
-  default = "Jumphost-vpc"
-}
-
-variable "igw-name" {
-  description = "Internet Gate Way Name for our Jumphost server"
-  type = string
-  default = "Jumphost-igw"
-}
-
-variable "subnet-name1" {
-  description = "Public Subnet 1 Name"
-  type = string
-  default = "Public-Subnet-1"
-}
-
-variable "subnet-name2" {
-  description = "Subnet Name for our Jumphost server"
-  type = string
-  default = "Public-subnet2"
-}
-
-# Private subnet name variables
-variable "private_subnet_name1" {
-  description = "Private Subnet 1 Name"
-  type = string
-  default = "Private-subnet1"
-}
-
-variable "private_subnet_name2" {
-  description = "Private Subnet 2 Name"
-  type = string
-  default = "Private-subnet2"
-}
-
-variable "rt-name" {
-  description = "Route Table Name for our Jumphost server"
-  type = string
-  default = "Jumphost-rt"
-}
-
-variable "sg-name" {
-  description = "Security Group for our Jumphost server"
-  type = string
-  default = "Jumphost-sg"
-}
-
-
-variable "iam-role" {
-  description = "IAM Role for the Jumphost Server"
-  type = string
-  default = "Jumphost-iam-role1"
-}
-
-variable "ami_id" {
-  description = "AMI ID for the EC2 instance"
-  type        = string
-  default     = "ami-0150ccaf51ab55a51" // Replace with the latest AMI ID for your region
+variable "subnet_cidr" {
+  type = map(string)
+  default = {
+    dev  = "10.0.1.0/24"
+    qa   = "10.1.1.0/24"
+    prod = "10.2.1.0/24"
+  }
 }
 
 variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-  default     = "t2.large"
+  type = map(string)
+  default = {
+    dev  = "t2.medium"
+    qa   = "t3.small"
+    prod = "c7i.2xlarge"
+  }
 }
 
-variable "key_name" {
-  description = "EC2 keypair"
-  type        = string
-  default     = "us-east-1"
+variable "availability_zone" {
+  type = map(string)
+  default = {
+    dev  = "us-east-1a"
+    qa   = "us-east-1b"
+    prod = "us-east-1c"
+  }
 }
 
-variable "instance_name" {
-  description = "EC2 Instance name for the jumphost server"
-  type        = string
-  default     = "Jumphost-server"
+variable "volume_size" {
+  type = map(number)
+  default = {
+    dev  = 25
+    qa   = 15
+    prod = 25
+  }
 }
-#
+
+variable "ports" {
+  type = map(list(number))
+  default = {
+    dev  = [22, 80,8080, 8081, 9000]
+    qa   = [22, 80]
+    prod = [22, 80, 8080, 8081, 9000, 5432]
+  }
+}

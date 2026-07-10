@@ -1,8 +1,15 @@
-output "region" {
-    description = "Jumphost Server region"
-    value = var.region
+output "workspace" {
+  value = terraform.workspace
 }
-output "jumphost_public_ip" {
-  description = "Public IP address of the EC2 jumphost"
-  value       = aws_instance.ec2.public_ip
+
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+output "subnet_id" {
+  value = module.subnet.subnet_id
+}
+
+output "instance_id" {
+  value = module.ec2.instance_id
 }
