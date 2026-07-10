@@ -75,8 +75,23 @@ sudo docker-compose --version
 sudo docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
 sudo docker ps
 
-# Install Trivy
-sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.48.3/trivy_0.48.3_Linux-64bit.rpm
+# Run trivy installation
+sudo rpm --import https://aquasecurity.github.io/trivy-repo/rpm/public.key
+
+cat <<EOF | sudo tee /etc/yum.repos.d/trivy.repo
+[trivy]
+name=Trivy repository
+baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/\$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=https://aquasecurity.github.io/trivy-repo/rpm/public.key
+EOF
+
+sudo dnf clean all
+sudo dnf makecache
+
+sudo dnf install -y trivy
+
 trivy --version
 
 # Install vault
