@@ -17,7 +17,7 @@ permissions:
 jobs:
   terraform:
     name: Terraform ECR Deployment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     defaults:
       run:
@@ -29,11 +29,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Setup Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.12.2
+     # 🔹 Terraform Version
+      - name: Check Terraform Version
+        run: terraform -version
+      
+       # 🔹 AWS CLI
+      - name: Check AWS CLI Version
+        run: aws --version
 
       # Display Selected Environment
       - name: Show Selected Environment
