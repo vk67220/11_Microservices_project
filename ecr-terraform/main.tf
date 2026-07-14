@@ -22,15 +22,15 @@ resource "aws_ecr_repository" "services" {
 
   tags = {
 
-    Name        = each.value
+    Name = each.value
 
     Environment = var.environment
 
-    Terraform   = "true"
+    Terraform = "true"
 
-    Project     = "Microservices"
+    Project = "Microservices"
 
-    Service     = each.value
+    Service = each.value
 
   }
 
