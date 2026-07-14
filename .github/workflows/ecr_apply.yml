@@ -1,4 +1,4 @@
-name: Terraform ECR Deployment
+name: Terraform ECR Apply
 
 on:
   workflow_dispatch:
