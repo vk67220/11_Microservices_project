@@ -1,0 +1,145 @@
+name: Terraform ECR Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Select Environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform ECR Deployment
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ecr-terraform
+
+    steps:
+
+      # Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+
+      # Display Selected Environment
+      - name: Show Selected Environment
+        run: |
+          echo "=================================="
+          echo "Environment : ${{ github.event.inputs.environment }}"
+          echo "=================================="
+
+      #################################################
+      # Configure AWS Credentials - DEV
+      #################################################
+
+      - name: Configure AWS Credentials (DEV)
+        if: github.event.inputs.environment == 'dev'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      #################################################
+      # Configure AWS Credentials - PROD
+      #################################################
+
+      - name: Configure AWS Credentials (PROD)
+        if: github.event.inputs.environment == 'prod'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      #################################################
+      # Set Environment Variable
+      #################################################
+
+      - name: Set Environment Variable
+        run: |
+          echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+
+      - name: Verify Environment
+        run: |
+          echo "Current Environment = $ENV"
+
+      #################################################
+      # Verify AWS
+      #################################################
+
+      - name: Verify AWS Account
+        run: aws sts get-caller-identity
+
+      #################################################
+      # Terraform
+      #################################################
+
+      - name: Terraform Version
+        run: terraform version
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive -diff
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config=backend/${ENV}.hcl
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file=environments/${ENV}.tfvars \
+            -out=tfplan
+
+      #################################################
+      # Upload Plan
+      #################################################
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.event.inputs.environment }}
+          path: ecr-terraform/tfplan
+
+      #################################################
+      # Apply
+      #################################################
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      #################################################
+      # Outputs
+      #################################################
+
+      - name: Terraform Outputs
+        run: terraform output
+
+      #################################################
+      # Completed
+      #################################################
+
+      - name: Deployment Completed
+        run: |
+          echo "=================================="
+          echo "Amazon ECR Repositories Created Successfully"
+          echo "Environment : $ENV"
+          echo "=================================="

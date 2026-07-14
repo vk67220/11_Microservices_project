@@ -78,7 +78,7 @@ sudo docker ps
 # Run trivy installation
 sudo rpm --import https://aquasecurity.github.io/trivy-repo/rpm/public.key
 
-cat <<EOF | sudo tee /etc/yum.repos.d/trivy.repo
+sudo tee /etc/yum.repos.d/trivy.repo >/dev/null <<EOF
 [trivy]
 name=Trivy repository
 baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/\$basearch/
@@ -89,6 +89,8 @@ EOF
 
 sudo dnf clean all
 sudo dnf makecache
+
+sudo dnf repolist
 
 sudo dnf install -y trivy
 
