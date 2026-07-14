@@ -1,4 +1,4 @@
-name: Terraform ECR Deployment
+name: Terraform ECR Destroy
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   terraform:
-    name: Terraform ECR Deployment
+    name: Terraform ECR Destroy
     runs-on: self-hosted
 
     defaults:
@@ -29,11 +29,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-     # 🔹 Terraform Version
+      # Terraform Version
       - name: Check Terraform Version
         run: terraform -version
-      
-       # 🔹 AWS CLI
+
+      # AWS CLI Version
       - name: Check AWS CLI Version
         run: aws --version
 
@@ -81,7 +81,7 @@ jobs:
           echo "Current Environment = $ENV"
 
       #################################################
-      # Verify AWS
+      # Verify AWS Account
       #################################################
 
       - name: Verify AWS Account
@@ -105,43 +105,41 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
+      #################################################
+      # Destroy Plan
+      #################################################
+
+      - name: Terraform Destroy Plan
         run: |
           terraform plan \
+            -destroy \
             -var-file=environments/${ENV}.tfvars \
-            -out=tfplan
+            -out=destroy.tfplan
 
       #################################################
-      # Upload Plan
+      # Upload Destroy Plan
       #################################################
 
-      - name: Upload Terraform Plan
+      - name: Upload Destroy Plan
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-plan-${{ github.event.inputs.environment }}
-          path: ecr-terraform/tfplan
+          name: terraform-destroy-plan-${{ github.event.inputs.environment }}
+          path: ecr-terraform/destroy.tfplan
 
       #################################################
-      # Apply
+      # Destroy
       #################################################
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
-
-      #################################################
-      # Outputs
-      #################################################
-
-      - name: Terraform Outputs
-        run: terraform output
+      - name: Terraform Destroy
+        run: terraform apply -auto-approve destroy.tfplan
 
       #################################################
       # Completed
       #################################################
 
-      - name: Deployment Completed
+      - name: Destroy Completed
         run: |
           echo "=================================="
-          echo "Amazon ECR Repositories Created Successfully"
+          echo "Amazon ECR Repositories Destroyed Successfully"
           echo "Environment : $ENV"
           echo "=================================="
