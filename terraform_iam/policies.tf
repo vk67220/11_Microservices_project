@@ -2,7 +2,7 @@
 # APP Inline Policy
 ############################################
 
-resource "aws_iam_user_policy" "app_policy" {
+resource "aws_iam_user_policy" "app_01_policy" {
   name = "app_policy"
   user = aws_iam_user.app.name
 
