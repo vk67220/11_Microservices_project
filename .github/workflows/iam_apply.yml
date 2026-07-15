@@ -23,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: terraform-iam
+        working-directory: terraform_iam
 
     steps:
       ############################################
