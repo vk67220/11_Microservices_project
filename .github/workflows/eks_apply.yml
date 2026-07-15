@@ -1,0 +1,106 @@
+name: Terraform Apply EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Select environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - production
+
+jobs:
+  terraform:
+    runs-on: self-hosted
+    environment: ${{ inputs.target_env }}
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+
+    steps:
+
+      #########################################
+      # Checkout Repository
+      #########################################
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      #########################################
+      # Configure AWS Credentials
+      #########################################
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      #########################################
+      # Verify AWS Identity
+      #########################################
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      #########################################
+      # Verify Terraform
+      #########################################
+      - name: Terraform Version
+        run: terraform version
+
+      #########################################
+      # Terraform Init
+      #########################################
+      - name: Terraform Init
+        run: terraform init
+
+      #########################################
+      # Terraform Validate
+      #########################################
+      - name: Terraform Validate
+        run: terraform validate
+
+      #########################################
+      # Terraform Plan
+      #########################################
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="aws_region=${AWS_REGION}" \
+            -var="cluster_name=${CLUSTER_NAME}"
+
+      #########################################
+      # Terraform Apply
+      #########################################
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="aws_region=${AWS_REGION}" \
+            -var="cluster_name=${CLUSTER_NAME}"
+
+      #########################################
+      # Update kubeconfig
+      #########################################
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${AWS_REGION} \
+            --name ${CLUSTER_NAME}
+
+      #########################################
+      # Verify EKS Nodes
+      #########################################
+      - name: Verify Nodes
+        run: kubectl get nodes
+
+      #########################################
+      # Verify Cluster Status
+      #########################################
+      - name: Verify Cluster
+        run: |
+          aws eks describe-cluster \
+            --name ${CLUSTER_NAME} \
+            --query "cluster.status"
