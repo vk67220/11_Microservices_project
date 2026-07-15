@@ -1,0 +1,119 @@
+name: Terraform IAM Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Select Terraform Action"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform IAM
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: terraform-iam
+
+    steps:
+      ############################################
+      # Checkout
+      ############################################
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      ############################################
+      # Verify Tools
+      ############################################
+
+      - name: Check Terraform Version
+        run: terraform version
+
+      - name: Check AWS CLI Version
+        run: aws --version
+
+      ############################################
+      # Configure Bootstrap AWS Credentials
+      ############################################
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      ############################################
+      # Verify AWS Account
+      ############################################
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
+      ############################################
+      # Terraform Format
+      ############################################
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive -diff
+
+      ############################################
+      # Terraform Init
+      ############################################
+
+      - name: Terraform Init
+        run: terraform init
+
+      ############################################
+      # Terraform Validate
+      ############################################
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      ############################################
+      # Terraform Plan
+      ############################################
+
+      - name: Terraform Plan
+        if: github.event.inputs.action == 'plan'
+        run: terraform plan -out=tfplan
+
+      ############################################
+      # Terraform Apply
+      ############################################
+
+      - name: Terraform Plan for Apply
+        if: github.event.inputs.action == 'apply'
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        run: terraform apply -auto-approve tfplan
+
+      ############################################
+      # Terraform Destroy
+      ############################################
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        run: terraform destroy -auto-approve
+
+      ############################################
+      # Outputs
+      ############################################
+
+      - name: Terraform Outputs
+        if: github.event.inputs.action == 'apply'
+        run: terraform output
