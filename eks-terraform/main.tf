@@ -1,225 +1,202 @@
-provider "aws" {
-  region = "us-east-1"
+############################################
+# Local Values
+############################################
+
+locals {
+  name = "${var.project_name}-${var.environment}"
 }
 
-# ----------------------------
-# IAM Role for EKS Cluster
-# ----------------------------
-resource "aws_iam_role" "master" {
-  name = "yaswanth-eks-master1"
+############################################
+# VPC
+############################################
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "eks.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
 
-resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.master.name
-}
+  name = "${local.name}-vpc"
+  cidr = var.vpc_cidr
 
-resource "aws_iam_role_policy_attachment" "AmazonEKSServicePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = aws_iam_role.master.name
-}
+  azs = var.availability_zones
 
-resource "aws_iam_role_policy_attachment" "AmazonEKSVPCResourceController" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role       = aws_iam_role.master.name
-}
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
 
-# ----------------------------
-# IAM Role for Worker Nodes
-# ----------------------------
-resource "aws_iam_role" "worker" {
-  name = "yaswanth-eks-worker1"
+  ##########################################
+  # Public Subnets
+  ##########################################
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
+  map_public_ip_on_launch = true
 
-resource "aws_iam_policy" "autoscaler" {
-  name = "yaswanth-eks-autoscaler-policy1"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = [
-        "autoscaling:DescribeAutoScalingGroups",
-        "autoscaling:DescribeAutoScalingInstances",
-        "autoscaling:DescribeTags",
-        "autoscaling:DescribeLaunchConfigurations",
-        "autoscaling:SetDesiredCapacity",
-        "autoscaling:TerminateInstanceInAutoScalingGroup",
-        "ec2:DescribeLaunchTemplateVersions"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
-    }]
-  })
-}
+  ##########################################
+  # NAT Gateway
+  ##########################################
 
-resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.worker.name
-}
+  enable_nat_gateway = true
 
-resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.worker.name
-}
+  # One NAT Gateway for all private subnets.
+  # Good for dev and cost optimization.
+  single_nat_gateway = true
 
-resource "aws_iam_role_policy_attachment" "AmazonSSMManagedInstanceCore" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  role       = aws_iam_role.worker.name
-}
+  ##########################################
+  # DNS
+  ##########################################
 
-resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.worker.name
-}
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
-resource "aws_iam_role_policy_attachment" "S3ReadOnlyAccess" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-  role       = aws_iam_role.worker.name
-}
+  ##########################################
+  # Kubernetes Public Load Balancer Tags
+  ##########################################
 
-resource "aws_iam_role_policy_attachment" "autoscaler" {
-  policy_arn = aws_iam_policy.autoscaler.arn
-  role       = aws_iam_role.worker.name
-}
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = "1"
+  }
 
-resource "aws_iam_instance_profile" "worker" {
-  depends_on = [aws_iam_role.worker]
-  name       = "yaswanth-eks-worker-profile1"
-  role       = aws_iam_role.worker.name
-}
+  ##########################################
+  # Kubernetes Internal Load Balancer Tags
+  ##########################################
 
-# ----------------------------
-# VPC and Subnet Data Sources
-# ----------------------------
-data "aws_vpc" "main" {
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = "1"
+  }
+
   tags = {
-    Name = "Jumphost-vpc"
+    Name = "${local.name}-vpc"
   }
 }
 
-data "aws_subnet" "subnet-1" {
-  vpc_id = data.aws_vpc.main.id
-  filter {
-    name   = "tag:Name"
-    values = ["Public-Subnet-1"]
-  }
-}
-
-data "aws_subnet" "subnet-2" {
-  vpc_id = data.aws_vpc.main.id
-  filter {
-    name   = "tag:Name"
-    values = ["Public-subnet2"]
-  }
-}
-
-data "aws_security_group" "selected" {
-  vpc_id = data.aws_vpc.main.id
-  filter {
-    name   = "tag:Name"
-    values = ["Jumphost-sg"]
-  }
-}
-
-# ----------------------------
+############################################
 # EKS Cluster
-# ----------------------------
-resource "aws_eks_cluster" "eks" {
-  name     = "project-eks"
-  role_arn = aws_iam_role.master.arn
+############################################
 
-  vpc_config {
-    subnet_ids         = [data.aws_subnet.subnet-1.id, data.aws_subnet.subnet-2.id]
-    security_group_ids = [data.aws_security_group.selected.id]
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
+
+  ##########################################
+  # Cluster
+  ##########################################
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+
+  ##########################################
+  # Networking
+  ##########################################
+
+  vpc_id = module.vpc.vpc_id
+
+  # Worker nodes are created in private subnets
+  subnet_ids = module.vpc.private_subnets
+
+  ##########################################
+  # EKS API Endpoint
+  ##########################################
+
+  cluster_endpoint_public_access = true
+
+  cluster_endpoint_private_access = true
+
+  ##########################################
+  # EKS Managed Node Group
+  ##########################################
+
+  eks_managed_node_groups = {
+
+    default = {
+
+      name = "${var.cluster_name}-node-group"
+
+      instance_types = var.node_instance_types
+
+      capacity_type = "ON_DEMAND"
+
+      min_size = var.node_min_size
+
+      desired_size = var.node_desired_size
+
+      max_size = var.node_max_size
+
+      ######################################
+      # Disk
+      ######################################
+
+      disk_size = 50
+
+      ######################################
+      # Node Labels
+      ######################################
+
+      labels = {
+        Environment = var.environment
+        NodeGroup   = "default"
+      }
+
+      tags = {
+        Name = "${var.cluster_name}-node-group"
+      }
+    }
   }
 
+  ##########################################
+  # EKS Access Entries
+  ##########################################
+
+  access_entries = {
+
+    ########################################
+    # IAM User Admin Access
+    ########################################
+
+    admin = {
+
+      principal_arn = var.eks_admin_principal_arn
+
+      policy_associations = {
+
+        cluster_admin = {
+
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+
+    ########################################
+    # GitHub Actions Access
+    ########################################
+
+    github_actions = {
+
+      principal_arn = var.github_actions_role_arn
+
+      policy_associations = {
+
+        cluster_admin = {
+
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
+  ##########################################
+  # Tags
+  ##########################################
+
   tags = {
-    Name        = "yaswanth-eks-cluster"
-    Environment = "dev"
-    Terraform   = "true"
+    Name = var.cluster_name
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.AmazonEKSServicePolicy,
-    aws_iam_role_policy_attachment.AmazonEKSVPCResourceController,
+    module.vpc
   ]
-}
-
-
-# ----------------------------
-# EKS Node Group
-# ----------------------------
-resource "aws_eks_node_group" "node-grp" {
-  cluster_name    = aws_eks_cluster.eks.name
-  node_group_name = var.node_group_name
-  node_role_arn   = aws_iam_role.worker.arn
-  subnet_ids      = [data.aws_subnet.subnet-1.id, data.aws_subnet.subnet-2.id]
-  capacity_type   = "ON_DEMAND"
-  disk_size       = 20
-  instance_types  = ["t2.large"]
-
-  labels = {
-    env = "dev"
-  }
-
-  tags = {
-    Name = "project-eks-node-group"
-  }
-
-  scaling_config {
-    desired_size = 3
-    max_size     = 10
-    min_size     = 2
-  }
-
-  update_config {
-    max_unavailable = 1
-  }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.AmazonEC2ContainerRegistryReadOnly,
-    aws_iam_role_policy_attachment.AmazonSSMManagedInstanceCore,
-    aws_iam_role_policy_attachment.autoscaler,
-  ]
-}
-
-# ----------------------------
-# OIDC Provider for ServiceAccount IAM Roles
-# ----------------------------
-data "aws_eks_cluster" "eks_oidc" {
-  name = aws_eks_cluster.eks.name
-}
-
-data "tls_certificate" "oidc_thumbprint" {
-  url = data.aws_eks_cluster.eks_oidc.identity[0].oidc[0].issuer
-}
-
-resource "aws_iam_openid_connect_provider" "eks_oidc" {
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.oidc_thumbprint.certificates[0].sha1_fingerprint]
-  url             = data.aws_eks_cluster.eks_oidc.identity[0].oidc[0].issuer
 }
