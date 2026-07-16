@@ -59,8 +59,8 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 
 #resource "aws_iam_role_policy_attachment" "cloudwatch_logs" {
 
- # role       = aws_iam_role.github_oidc_role.name
-  #policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+# role       = aws_iam_role.github_oidc_role.name
+#policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 
 #}
 
