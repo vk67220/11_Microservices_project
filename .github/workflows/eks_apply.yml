@@ -72,17 +72,15 @@ jobs:
       - name: Terraform Plan
         run: |
           terraform plan \
-            -var="aws_region=${AWS_REGION}" \
-            -var="cluster_name=${CLUSTER_NAME}"
+            -var-file=environments/${{ github.event.inputs.target_env }}.tfvars \
+            -out=tfplan
 
       #########################################
       # Terraform Apply
       #########################################
       - name: Terraform Apply
         run: |
-          terraform apply -auto-approve \
-            -var="aws_region=${AWS_REGION}" \
-            -var="cluster_name=${CLUSTER_NAME}"
+          terraform apply -auto-approve tfplan
 
       #########################################
       # Update kubeconfig
