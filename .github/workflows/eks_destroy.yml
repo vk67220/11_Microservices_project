@@ -11,6 +11,10 @@ on:
           - dev
           - production
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
 
   terraform-destroy:
@@ -36,21 +40,27 @@ jobs:
         uses: actions/checkout@v4
 
       #################################################
-      # Configure AWS Credentials
+      # Setup Terraform
+      #################################################
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      #################################################
+      # Configure AWS Credentials (OIDC)
       #################################################
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::302524629943:role/github-oidc-selfhosted-role
           aws-region: ${{ secrets.AWS_REGION }}
 
       #################################################
-      # Verify AWS Account
+      # Verify AWS Identity
       #################################################
 
-      - name: Verify AWS Account
+      - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
       #################################################
@@ -85,15 +95,6 @@ jobs:
         run: terraform validate
 
       #################################################
-      # Read Cluster Name
-      #################################################
-
-      - name: Read Cluster Name
-        run: |
-          CLUSTER_NAME=$(grep '^cluster_name' environments/${{ github.event.inputs.target_env }}.tfvars | cut -d '"' -f2)
-          echo "CLUSTER_NAME=$CLUSTER_NAME" >> $GITHUB_ENV
-
-      #################################################
       # Terraform Destroy Plan
       #################################################
 
@@ -115,17 +116,36 @@ jobs:
       # Verify Cluster Deletion
       #################################################
 
-      - name: Verify Cluster Deletion
+      - name: Verify Remaining Clusters
         run: |
-          echo "Existing Clusters:"
           aws eks list-clusters --region $AWS_REGION
 
       #################################################
-      # Verify VPC Deletion
+      # Verify Remaining VPCs
       #################################################
 
       - name: Verify Remaining VPCs
         run: |
           aws ec2 describe-vpcs \
             --query "Vpcs[*].[VpcId,CidrBlock]" \
+            --output table
+
+      #################################################
+      # Verify Remaining NAT Gateways
+      #################################################
+
+      - name: Verify NAT Gateways
+        run: |
+          aws ec2 describe-nat-gateways \
+            --query "NatGateways[*].[NatGatewayId,State]" \
+            --output table
+
+      #################################################
+      # Verify Remaining Internet Gateways
+      #################################################
+
+      - name: Verify Internet Gateways
+        run: |
+          aws ec2 describe-internet-gateways \
+            --query "InternetGateways[*].[InternetGatewayId]" \
             --output table
