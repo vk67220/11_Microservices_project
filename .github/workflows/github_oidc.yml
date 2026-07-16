@@ -19,13 +19,13 @@ jobs:
 
   terraform:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     environment: ${{ github.event.inputs.target_env }}
 
     defaults:
       run:
-        working-directory: terraform-github-oidc
+        working-directory: terraform_github_oidc
 
     steps:
 
