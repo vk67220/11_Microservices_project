@@ -11,6 +11,10 @@ on:
           - dev
           - production
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
 
   terraform:
@@ -29,29 +33,34 @@ jobs:
     steps:
 
       #################################################
-      # Checkout
+      # Checkout Repository
       #################################################
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       #################################################
-      # AWS Credentials
+      # Setup Terraform
+      #################################################
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      #################################################
+      # Configure AWS Credentials (OIDC)
       #################################################
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
-
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::302524629943:role/github-oidc-selfhosted-role
           aws-region: ${{ secrets.AWS_REGION }}
 
       #################################################
-      # Verify Identity
+      # Verify AWS Identity
       #################################################
 
-      - name: Verify AWS Account
+      - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
       #################################################
@@ -79,7 +88,7 @@ jobs:
             -backend-config=backend/${{ github.event.inputs.target_env }}.hcl
 
       #################################################
-      # Validate
+      # Terraform Validate
       #################################################
 
       - name: Terraform Validate
@@ -110,23 +119,23 @@ jobs:
         run: terraform output
 
       #################################################
-      # Get Cluster Name
+      # Read Cluster Name
       #################################################
 
       - name: Read Cluster Name
         run: |
-          CLUSTER_NAME=$(grep '^cluster_name' environments/${{ github.event.inputs.target_env }}.tfvars | cut -d '"' -f2)
+          CLUSTER_NAME=$(terraform output -raw cluster_name)
           echo "CLUSTER_NAME=$CLUSTER_NAME" >> $GITHUB_ENV
 
       #################################################
       # Update kubeconfig
       #################################################
 
-      - name: Configure kubectl
+      - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
-            --region $AWS_REGION \
-            --name $CLUSTER_NAME
+            --region "$AWS_REGION" \
+            --name "$CLUSTER_NAME"
 
       #################################################
       # Verify Nodes
@@ -142,5 +151,5 @@ jobs:
       - name: Verify Cluster
         run: |
           aws eks describe-cluster \
-            --name $CLUSTER_NAME \
+            --name "$CLUSTER_NAME" \
             --query "cluster.status"
