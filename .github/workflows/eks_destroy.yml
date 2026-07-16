@@ -81,7 +81,7 @@ jobs:
       #########################################
       - name: Terraform Destroy
         run: |
-          terraform destroy -auto-approve destroy.tfplan
+          terraform apply -auto-approve destroy.tfplan
 
       #########################################
       # Verify Cluster Deletion
