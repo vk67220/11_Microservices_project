@@ -4,7 +4,7 @@
 
 resource "aws_iam_policy" "github_oidc_custom_policy" {
 
-  name        = "github-oidc-custom-policy"
+  name = "github-oidc-custom-policy"
 
   description = "Custom policy for GitHub OIDC Terraform deployments"
 
@@ -20,7 +20,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
 
       {
 
-        Sid    = "EKSClusterManagement"
+        Sid = "EKSClusterManagement"
 
         Effect = "Allow"
 
@@ -63,7 +63,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
 
       {
 
-        Sid    = "EKSAddonPermissions"
+        Sid = "EKSAddonPermissions"
 
         Effect = "Allow"
 
@@ -87,7 +87,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
 
       {
 
-        Sid    = "KMSPermissions"
+        Sid = "KMSPermissions"
 
         Effect = "Allow"
 

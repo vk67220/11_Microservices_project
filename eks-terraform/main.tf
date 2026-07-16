@@ -62,10 +62,10 @@ module "eks" {
   ]
 
   cluster_addons = {
-    coredns             = {}
-    kube-proxy          = {}
-    vpc-cni             = {}
-    aws-ebs-csi-driver  = {}
+    coredns            = {}
+    kube-proxy         = {}
+    vpc-cni            = {}
+    aws-ebs-csi-driver = {}
   }
 
   eks_managed_node_groups = {
