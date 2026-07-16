@@ -134,7 +134,7 @@ module "eks" {
       }
 
       tags = {
-        Name = "${var.cluster_name}-node-group"
+        Name = "${var.cluster_name}"
       }
     }
   }
