@@ -9,7 +9,8 @@ aws_region = "us-east-1"
 ############################################
 
 project_name = "microservices"
-environment  = "dev"
+
+environment = "dev"
 
 ############################################
 # VPC

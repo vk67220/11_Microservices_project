@@ -3,9 +3,8 @@
 ############################################
 
 variable "aws_region" {
-  description = "AWS Region"
+  description = "AWS Region where resources will be created"
   type        = string
-  default     = "us-east-1"
 }
 
 ############################################
@@ -15,13 +14,11 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project Name"
   type        = string
-  default     = "microservices"
 }
 
 variable "environment" {
-  description = "Environment Name"
+  description = "Environment Name (dev/production)"
   type        = string
-  default     = "dev"
 }
 
 ############################################
@@ -31,52 +28,40 @@ variable "environment" {
 variable "vpc_cidr" {
   description = "VPC CIDR Block"
   type        = string
-  default     = "10.0.0.0/16"
 }
 
 variable "availability_zones" {
   description = "Availability Zones"
-  type        = list(string)
 
-  default = [
-    "us-east-1a",
-    "us-east-1b"
-  ]
+  type = list(string)
 }
 
 variable "public_subnets" {
-  description = "Public Subnet CIDR Blocks"
-  type        = list(string)
+  description = "Public Subnet CIDRs"
 
-  default = [
-    "10.0.1.0/24",
-    "10.0.2.0/24"
-  ]
+  type = list(string)
 }
 
 variable "private_subnets" {
-  description = "Private Subnet CIDR Blocks"
-  type        = list(string)
+  description = "Private Subnet CIDRs"
 
-  default = [
-    "10.0.3.0/24",
-    "10.0.4.0/24"
-  ]
+  type = list(string)
 }
 
 ############################################
-# EKS
+# EKS Cluster
 ############################################
 
 variable "cluster_name" {
   description = "EKS Cluster Name"
-  type        = string
-  default     = "dev-eks"
+
+  type = string
 }
 
 variable "cluster_version" {
-  description = "EKS Kubernetes Version"
-  type        = string
+  description = "Kubernetes Version"
+
+  type = string
 }
 
 ############################################
@@ -84,30 +69,27 @@ variable "cluster_version" {
 ############################################
 
 variable "node_instance_types" {
-  description = "EC2 Instance Types for EKS Worker Nodes"
-  type        = list(string)
+  description = "EKS Worker Node Instance Types"
 
-  default = [
-    "m7i-flex.large"
-  ]
+  type = list(string)
 }
 
 variable "node_min_size" {
-  description = "Minimum Number of Worker Nodes"
-  type        = number
-  default     = 2
+  description = "Minimum Worker Nodes"
+
+  type = number
 }
 
 variable "node_desired_size" {
-  description = "Desired Number of Worker Nodes"
-  type        = number
-  default     = 2
+  description = "Desired Worker Nodes"
+
+  type = number
 }
 
 variable "node_max_size" {
-  description = "Maximum Number of Worker Nodes"
-  type        = number
-  default     = 5
+  description = "Maximum Worker Nodes"
+
+  type = number
 }
 
 ############################################
@@ -115,11 +97,13 @@ variable "node_max_size" {
 ############################################
 
 variable "eks_admin_principal_arn" {
-  description = "IAM User or Role ARN for EKS Administrator Access"
-  type        = string
+  description = "IAM User/Role ARN with EKS Cluster Admin Access"
+
+  type = string
 }
 
 variable "github_actions_role_arn" {
-  description = "GitHub Actions OIDC IAM Role ARN"
-  type        = string
+  description = "GitHub Actions OIDC Role ARN"
+
+  type = string
 }

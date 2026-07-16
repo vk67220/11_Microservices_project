@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target_env:
-        description: "Select environment"
+        description: Select Environment
         required: true
         type: choice
         options:
@@ -12,96 +12,135 @@ on:
           - production
 
 jobs:
+
   terraform:
+
     runs-on: self-hosted
-    environment: ${{ inputs.target_env }}
-    
+
+    environment: ${{ github.event.inputs.target_env }}
+
     defaults:
       run:
-        working-directory: eks-terraform 
+        working-directory: eks-terraform
+
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
 
     steps:
 
-      #########################################
-      # Checkout Repository
-      #########################################
-      - name: Checkout code
+      #################################################
+      # Checkout
+      #################################################
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      #########################################
-      # Configure AWS Credentials
-      #########################################
+      #################################################
+      # AWS Credentials
+      #################################################
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
+
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      #########################################
-      # Verify AWS Identity
-      #########################################
-      - name: Verify AWS Identity
-        run: |
-          aws sts get-caller-identity
+      #################################################
+      # Verify Identity
+      #################################################
 
-      #########################################
-      # Verify Terraform
-      #########################################
+      - name: Verify AWS Account
+        run: aws sts get-caller-identity
+
+      #################################################
+      # Terraform Version
+      #################################################
+
       - name: Terraform Version
         run: terraform version
 
-      #########################################
-      # Terraform Init
-      #########################################
-      - name: Terraform Init
-        run: terraform init
+      #################################################
+      # Terraform Format
+      #################################################
 
-      #########################################
-      # Terraform Validate
-      #########################################
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      #################################################
+      # Terraform Init
+      #################################################
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config=backend/${{ github.event.inputs.target_env }}.hcl
+
+      #################################################
+      # Validate
+      #################################################
+
       - name: Terraform Validate
         run: terraform validate
 
-      #########################################
+      #################################################
       # Terraform Plan
-      #########################################
+      #################################################
+
       - name: Terraform Plan
         run: |
           terraform plan \
             -var-file=environments/${{ github.event.inputs.target_env }}.tfvars \
             -out=tfplan
 
-      #########################################
+      #################################################
       # Terraform Apply
-      #########################################
-      - name: Terraform Apply
-        run: |
-          terraform apply -auto-approve tfplan
+      #################################################
 
-      #########################################
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      #################################################
+      # Terraform Outputs
+      #################################################
+
+      - name: Terraform Outputs
+        run: terraform output
+
+      #################################################
+      # Get Cluster Name
+      #################################################
+
+      - name: Read Cluster Name
+        run: |
+          CLUSTER_NAME=$(grep '^cluster_name' environments/${{ github.event.inputs.target_env }}.tfvars | cut -d '"' -f2)
+          echo "CLUSTER_NAME=$CLUSTER_NAME" >> $GITHUB_ENV
+
+      #################################################
       # Update kubeconfig
-      #########################################
-      - name: Update kubeconfig
+      #################################################
+
+      - name: Configure kubectl
         run: |
           aws eks update-kubeconfig \
-            --region ${AWS_REGION} \
-            --name ${CLUSTER_NAME}
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
 
-      #########################################
-      # Verify EKS Nodes
-      #########################################
+      #################################################
+      # Verify Nodes
+      #################################################
+
       - name: Verify Nodes
-        run: kubectl get nodes
+        run: kubectl get nodes -o wide
 
-      #########################################
-      # Verify Cluster Status
-      #########################################
+      #################################################
+      # Verify Cluster
+      #################################################
+
       - name: Verify Cluster
         run: |
           aws eks describe-cluster \
-            --name ${CLUSTER_NAME} \
+            --name $CLUSTER_NAME \
             --query "cluster.status"

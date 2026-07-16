@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target_env:
-        description: "Select environment"
+        description: Select Environment
         required: true
         type: choice
         options:
@@ -12,29 +12,33 @@ on:
           - production
 
 jobs:
+
   terraform-destroy:
+
     runs-on: self-hosted
-    environment: ${{ inputs.target_env }}
+
+    environment: ${{ github.event.inputs.target_env }}
 
     defaults:
       run:
-       working-directory: eks-terraform
+        working-directory: eks-terraform
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
 
     steps:
 
-      #########################################
+      #################################################
       # Checkout Repository
-      #########################################
-      - name: Checkout code
+      #################################################
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      #########################################
+      #################################################
       # Configure AWS Credentials
-      #########################################
+      #################################################
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -42,50 +46,86 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      #########################################
-      # Verify AWS Identity
-      #########################################
-      - name: Verify AWS Identity
-        run: |
-          aws sts get-caller-identity
+      #################################################
+      # Verify AWS Account
+      #################################################
 
-      #########################################
-      # Verify Terraform
-      #########################################
+      - name: Verify AWS Account
+        run: aws sts get-caller-identity
+
+      #################################################
+      # Terraform Version
+      #################################################
+
       - name: Terraform Version
         run: terraform version
 
-      #########################################
-      # Terraform Init
-      #########################################
-      - name: Terraform Init
-        run: terraform init
+      #################################################
+      # Terraform Format
+      #################################################
 
-      #########################################
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      #################################################
+      # Terraform Init
+      #################################################
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config=backend/${{ github.event.inputs.target_env }}.hcl
+
+      #################################################
       # Terraform Validate
-      #########################################
+      #################################################
+
       - name: Terraform Validate
         run: terraform validate
 
-      #########################################
+      #################################################
+      # Read Cluster Name
+      #################################################
+
+      - name: Read Cluster Name
+        run: |
+          CLUSTER_NAME=$(grep '^cluster_name' environments/${{ github.event.inputs.target_env }}.tfvars | cut -d '"' -f2)
+          echo "CLUSTER_NAME=$CLUSTER_NAME" >> $GITHUB_ENV
+
+      #################################################
       # Terraform Destroy Plan
-      #########################################
+      #################################################
+
       - name: Terraform Destroy Plan
         run: |
-          terraform plan -destroy \
+          terraform plan \
+            -destroy \
             -var-file=environments/${{ github.event.inputs.target_env }}.tfvars \
             -out=destroy.tfplan
 
-      #########################################
+      #################################################
       # Terraform Destroy
-      #########################################
-      - name: Terraform Destroy
-        run: |
-          terraform apply -auto-approve destroy.tfplan
+      #################################################
 
-      #########################################
+      - name: Terraform Destroy
+        run: terraform apply -auto-approve destroy.tfplan
+
+      #################################################
       # Verify Cluster Deletion
-      #########################################
+      #################################################
+
       - name: Verify Cluster Deletion
         run: |
-          aws eks list-clusters --region ${AWS_REGION}
+          echo "Existing Clusters:"
+          aws eks list-clusters --region $AWS_REGION
+
+      #################################################
+      # Verify VPC Deletion
+      #################################################
+
+      - name: Verify Remaining VPCs
+        run: |
+          aws ec2 describe-vpcs \
+            --query "Vpcs[*].[VpcId,CidrBlock]" \
+            --output table
