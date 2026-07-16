@@ -29,3 +29,15 @@ output "github_oidc_role_arn" {
   value = aws_iam_role.github_oidc_role.arn
 
 }
+
+############################################
+# Custom Policy
+############################################
+
+output "github_oidc_custom_policy_arn" {
+
+  description = "GitHub OIDC Custom Policy ARN"
+
+  value = aws_iam_policy.github_oidc_custom_policy.arn
+
+}
