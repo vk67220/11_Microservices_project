@@ -1,0 +1,91 @@
+name: Terraform Destroy EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Select environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - production
+
+jobs:
+  terraform-destroy:
+    runs-on: self-hosted
+    environment: ${{ inputs.target_env }}
+
+    defaults:
+      run:
+       working-directory: eks-terraform
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+
+    steps:
+
+      #########################################
+      # Checkout Repository
+      #########################################
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      #########################################
+      # Configure AWS Credentials
+      #########################################
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      #########################################
+      # Verify AWS Identity
+      #########################################
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      #########################################
+      # Verify Terraform
+      #########################################
+      - name: Terraform Version
+        run: terraform version
+
+      #########################################
+      # Terraform Init
+      #########################################
+      - name: Terraform Init
+        run: terraform init
+
+      #########################################
+      # Terraform Validate
+      #########################################
+      - name: Terraform Validate
+        run: terraform validate
+
+      #########################################
+      # Terraform Destroy Plan
+      #########################################
+      - name: Terraform Destroy Plan
+        run: |
+          terraform plan -destroy \
+            -var-file=environments/${{ github.event.inputs.target_env }}.tfvars \
+            -out=destroy.tfplan
+
+      #########################################
+      # Terraform Destroy
+      #########################################
+      - name: Terraform Destroy
+        run: |
+          terraform destroy -auto-approve destroy.tfplan
+
+      #########################################
+      # Verify Cluster Deletion
+      #########################################
+      - name: Verify Cluster Deletion
+        run: |
+          aws eks list-clusters --region ${AWS_REGION}
