@@ -1,0 +1,112 @@
+name: Terraform Apply GitHub OIDC
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Select Environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - production
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+
+  terraform:
+
+    runs-on: self-hosted
+
+    environment: ${{ github.event.inputs.target_env }}
+
+    defaults:
+      run:
+        working-directory: terraform-github-oidc
+
+    steps:
+
+    #########################################
+    # Checkout Repository
+    #########################################
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    #########################################
+    # Install Terraform
+    #########################################
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    #########################################
+    # Configure AWS Credentials using OIDC
+    #########################################
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    #########################################
+    # Verify Identity
+    #########################################
+
+    - name: Verify AWS Identity
+      run: aws sts get-caller-identity
+
+    #########################################
+    # Terraform Version
+    #########################################
+
+    - name: Terraform Version
+      run: terraform version
+
+    #########################################
+    # Terraform Format
+    #########################################
+
+    - name: Terraform Format
+      run: terraform fmt -check -recursive
+
+    #########################################
+    # Terraform Init
+    #########################################
+
+    - name: Terraform Init
+      run: |
+        terraform init \
+          -reconfigure \
+          -backend-config=backend/${{ github.event.inputs.target_env }}.hcl
+
+    #########################################
+    # Terraform Validate
+    #########################################
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    #########################################
+    # Terraform Plan
+    #########################################
+
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+
+    #########################################
+    # Terraform Apply
+    #########################################
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+
+    #########################################
+    # Terraform Outputs
+    #########################################
+
+    - name: Terraform Outputs
+      run: terraform output
