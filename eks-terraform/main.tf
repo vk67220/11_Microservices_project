@@ -106,7 +106,7 @@ module "eks" {
 
     default = {
 
-      name = "${var.cluster_name}-node-group"
+      name = "${var.cluster_name}"
 
       instance_types = var.node_instance_types
 
