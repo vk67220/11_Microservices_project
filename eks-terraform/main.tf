@@ -111,25 +111,25 @@ module "eks" {
     }
 
     #github_actions = {
-     # principal_arn = var.github_actions_role_arn
-      #policy_associations = {
-       # admin = {
-        #  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-         # access_scope = {
-          #  type = "cluster"
-          #}
-        #}
-      #}
+    # principal_arn = var.github_actions_role_arn
+    #policy_associations = {
+    # admin = {
+    #  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+    # access_scope = {
+    #  type = "cluster"
     #}
-  #}
+    #}
+    #}
+    #}
+    #}
 
-  tags = {
-    Name        = var.cluster_name
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = "Terraform"
+    tags = {
+      Name        = var.cluster_name
+      Project     = var.project_name
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+
+    depends_on = [module.vpc]
   }
-
-  depends_on = [module.vpc]
-}
 }

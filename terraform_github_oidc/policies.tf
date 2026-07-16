@@ -4,7 +4,7 @@
 
 resource "aws_iam_policy" "github_oidc_custom_policy" {
 
-  name        = "github-oidc-custom-policy"
+  name = "github-oidc-custom-policy"
 
   description = "Custom IAM Policy for GitHub OIDC Terraform Deployments"
 
@@ -19,7 +19,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "EKSClusterManagement"
+        Sid = "EKSClusterManagement"
 
         Effect = "Allow"
 
@@ -65,7 +65,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "EKSAddonManagement"
+        Sid = "EKSAddonManagement"
 
         Effect = "Allow"
 
@@ -88,7 +88,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "IAMPassRole"
+        Sid = "IAMPassRole"
 
         Effect = "Allow"
 
@@ -106,7 +106,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "EC2Permissions"
+        Sid = "EC2Permissions"
 
         Effect = "Allow"
 
@@ -124,7 +124,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "AutoScaling"
+        Sid = "AutoScaling"
 
         Effect = "Allow"
 
@@ -142,7 +142,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "ELBPermissions"
+        Sid = "ELBPermissions"
 
         Effect = "Allow"
 
@@ -160,7 +160,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "IAMRead"
+        Sid = "IAMRead"
 
         Effect = "Allow"
 
@@ -182,7 +182,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "KMSPermissions"
+        Sid = "KMSPermissions"
 
         Effect = "Allow"
 
@@ -209,7 +209,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "CloudWatch"
+        Sid = "CloudWatch"
 
         Effect = "Allow"
 
@@ -227,7 +227,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "CloudWatchLogs"
+        Sid = "CloudWatchLogs"
 
         Effect = "Allow"
 
@@ -245,7 +245,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       ##########################################
 
       {
-        Sid    = "SSM"
+        Sid = "SSM"
 
         Effect = "Allow"
 
