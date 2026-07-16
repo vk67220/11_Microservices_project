@@ -4,9 +4,9 @@
 
 resource "aws_iam_policy" "github_oidc_custom_policy" {
 
-  name = "github-oidc-custom-policy"
+  name        = "github-oidc-custom-policy"
 
-  description = "Custom policy for GitHub OIDC Terraform deployments"
+  description = "Custom IAM Policy for GitHub OIDC Terraform Deployments"
 
   policy = jsonencode({
 
@@ -14,13 +14,12 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
 
     Statement = [
 
-      ##################################################
+      ##########################################
       # EKS Cluster Management
-      ##################################################
+      ##########################################
 
       {
-
-        Sid = "EKSClusterManagement"
+        Sid    = "EKSClusterManagement"
 
         Effect = "Allow"
 
@@ -32,38 +31,41 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
           "eks:ListClusters",
           "eks:UpdateClusterConfig",
           "eks:UpdateClusterVersion",
+          "eks:DescribeClusterVersions",
 
           "eks:CreateNodegroup",
           "eks:DeleteNodegroup",
           "eks:DescribeNodegroup",
+          "eks:ListNodegroups",
           "eks:UpdateNodegroupConfig",
           "eks:UpdateNodegroupVersion",
 
           "eks:CreateAccessEntry",
           "eks:DeleteAccessEntry",
+          "eks:DescribeAccessEntry",
+          "eks:ListAccessEntries",
+
           "eks:AssociateAccessPolicy",
           "eks:DisassociateAccessPolicy",
-          "eks:ListAccessEntries",
-          "eks:DescribeAccessEntry",
+          "eks:ListAssociatedAccessPolicies",
+
+          "eks:DescribeUpdate",
+          "eks:ListUpdates",
 
           "eks:TagResource",
-          "eks:UntagResource",
-
-          "eks:DescribeClusterVersions"
+          "eks:UntagResource"
 
         ]
 
         Resource = "*"
-
       },
 
-      ##################################################
+      ##########################################
       # EKS Add-ons
-      ##################################################
+      ##########################################
 
       {
-
-        Sid = "EKSAddonPermissions"
+        Sid    = "EKSAddonManagement"
 
         Effect = "Allow"
 
@@ -72,40 +74,188 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
           "eks:CreateAddon",
           "eks:DeleteAddon",
           "eks:DescribeAddon",
-          "eks:UpdateAddon",
-          "eks:ListAddons"
+          "eks:DescribeAddonVersions",
+          "eks:ListAddons",
+          "eks:UpdateAddon"
 
         ]
 
         Resource = "*"
-
       },
 
-      ##################################################
-      # KMS
-      ##################################################
+      ##########################################
+      # IAM Pass Role
+      ##########################################
 
       {
+        Sid    = "IAMPassRole"
 
-        Sid = "KMSPermissions"
+        Effect = "Allow"
+
+        Action = [
+
+          "iam:PassRole"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # EC2
+      ##########################################
+
+      {
+        Sid    = "EC2Permissions"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "ec2:*"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # Auto Scaling
+      ##########################################
+
+      {
+        Sid    = "AutoScaling"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "autoscaling:*"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # Elastic Load Balancer
+      ##########################################
+
+      {
+        Sid    = "ELBPermissions"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "elasticloadbalancing:*"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # IAM Read Permissions
+      ##########################################
+
+      {
+        Sid    = "IAMRead"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "iam:GetRole",
+          "iam:ListRoles",
+          "iam:GetPolicy",
+          "iam:ListPolicies",
+          "iam:GetOpenIDConnectProvider"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # KMS
+      ##########################################
+
+      {
+        Sid    = "KMSPermissions"
 
         Effect = "Allow"
 
         Action = [
 
           "kms:CreateKey",
-          "kms:CreateAlias",
           "kms:DescribeKey",
-          "kms:EnableKeyRotation",
-          "kms:TagResource",
-          "kms:PutKeyPolicy",
+          "kms:ListKeys",
+          "kms:ListAliases",
+          "kms:CreateAlias",
           "kms:UpdateAlias",
-          "kms:DeleteAlias"
+          "kms:DeleteAlias",
+          "kms:EnableKeyRotation",
+          "kms:PutKeyPolicy",
+          "kms:TagResource"
 
         ]
 
         Resource = "*"
+      },
 
+      ##########################################
+      # CloudWatch
+      ##########################################
+
+      {
+        Sid    = "CloudWatch"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "cloudwatch:*"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # CloudWatch Logs
+      ##########################################
+
+      {
+        Sid    = "CloudWatchLogs"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "logs:*"
+
+        ]
+
+        Resource = "*"
+      },
+
+      ##########################################
+      # Systems Manager
+      ##########################################
+
+      {
+        Sid    = "SSM"
+
+        Effect = "Allow"
+
+        Action = [
+
+          "ssm:*"
+
+        ]
+
+        Resource = "*"
       }
 
     ]
