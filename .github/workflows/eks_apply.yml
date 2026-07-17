@@ -19,7 +19,7 @@ jobs:
 
   terraform:
 
-    runs-on: k8s
+    runs-on: self-hosted
 
     environment: ${{ github.event.inputs.target_env }}
 
