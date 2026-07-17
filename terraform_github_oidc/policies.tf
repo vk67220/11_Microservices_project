@@ -195,6 +195,7 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
           "kms:CreateAlias",
           "kms:UpdateAlias",
           "kms:DeleteAlias",
+          "kms:GetKeyRotationStatus",
           "kms:EnableKeyRotation",
           "kms:PutKeyPolicy",
           "kms:TagResource"
