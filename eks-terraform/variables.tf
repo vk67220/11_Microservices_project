@@ -107,3 +107,15 @@ variable "github_actions_role_arn" {
 
   type = string
 }
+
+variable "cluster_addons" {
+  description = "EKS Managed Addons"
+
+  type = map(object({
+    most_recent              = optional(bool)
+    addon_version            = optional(string)
+    service_account_role_arn = optional(string)
+  }))
+
+  default = {}
+}
