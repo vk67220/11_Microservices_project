@@ -178,15 +178,16 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       },
 
       ##########################################
-      # KMS
-      ##########################################
+# KMS
+##########################################
 
-      {
-        Sid = "KMSPermissions"
+{
+  Sid    = "KMSPermissions"
 
-        
-  "Effect": "Allow",
-  "Action": [
+  Effect = "Allow"
+
+  Action = [
+
     "kms:CreateKey",
     "kms:DescribeKey",
     "kms:GetKeyPolicy",
@@ -206,10 +207,16 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
     "kms:ListKeys",
     "kms:ListGrants",
     "kms:CreateGrant",
-    "kms:RevokeGrant"
-  ],
-  "Resource": "*"
-}
+    "kms:RevokeGrant",
+    "kms:Encrypt",
+    "kms:Decrypt",
+    "kms:GenerateDataKey",
+    "kms:GenerateDataKeyWithoutPlaintext",
+    "kms:ReEncrypt*"
+  ]
+
+  Resource = "*"
+},
 
 
       ##########################################
