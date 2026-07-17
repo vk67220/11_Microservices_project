@@ -178,45 +178,45 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       },
 
       ##########################################
-# KMS
-##########################################
+      # KMS
+      ##########################################
 
-{
-  Sid    = "KMSPermissions"
+      {
+        Sid = "KMSPermissions"
 
-  Effect = "Allow"
+        Effect = "Allow"
 
-  Action = [
+        Action = [
 
-    "kms:CreateKey",
-    "kms:DescribeKey",
-    "kms:GetKeyPolicy",
-    "kms:PutKeyPolicy",
-    "kms:GetKeyRotationStatus",
-    "kms:EnableKeyRotation",
-    "kms:DisableKeyRotation",
-    "kms:CreateAlias",
-    "kms:UpdateAlias",
-    "kms:DeleteAlias",
-    "kms:ListAliases",
-    "kms:TagResource",
-    "kms:UntagResource",
-    "kms:ListResourceTags",
-    "kms:ScheduleKeyDeletion",
-    "kms:CancelKeyDeletion",
-    "kms:ListKeys",
-    "kms:ListGrants",
-    "kms:CreateGrant",
-    "kms:RevokeGrant",
-    "kms:Encrypt",
-    "kms:Decrypt",
-    "kms:GenerateDataKey",
-    "kms:GenerateDataKeyWithoutPlaintext",
-    "kms:ReEncrypt*"
-  ]
+          "kms:CreateKey",
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:PutKeyPolicy",
+          "kms:GetKeyRotationStatus",
+          "kms:EnableKeyRotation",
+          "kms:DisableKeyRotation",
+          "kms:CreateAlias",
+          "kms:UpdateAlias",
+          "kms:DeleteAlias",
+          "kms:ListAliases",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ListResourceTags",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion",
+          "kms:ListKeys",
+          "kms:ListGrants",
+          "kms:CreateGrant",
+          "kms:RevokeGrant",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:ReEncrypt*"
+        ]
 
-  Resource = "*"
-},
+        Resource = "*"
+      },
 
 
       ##########################################
