@@ -62,14 +62,14 @@ module "eks" {
   ]
 
   cluster_encryption_config = {
-  resources = [
-    "secrets"
-  ]
+    resources = [
+      "secrets"
+    ]
 
-  provider_key_arn = aws_kms_key.eks.arn
-}
+    provider_key_arn = aws_kms_key.eks.arn
+  }
 
-  
+
   cluster_addons = local.cluster_addons
 
   eks_managed_node_groups = {
@@ -117,19 +117,19 @@ module "eks" {
     }
 
     # Uncomment later if needed
-      github_actions = {
+    github_actions = {
       principal_arn = var.github_actions_role_arn
-    
-        policy_associations = {
-          admin = {
-            policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-     
-            access_scope = {
-              type = "cluster"
-            }
+
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          access_scope = {
+            type = "cluster"
           }
         }
       }
+    }
   }
 
   tags = {

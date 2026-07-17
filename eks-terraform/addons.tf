@@ -7,7 +7,7 @@ locals {
 
     kube-proxy = {
       #most_recent = true
-       addon_version = "v1.33.0-eksbuild.1"
+      addon_version = "v1.33.0-eksbuild.1"
     }
 
     vpc-cni = {
