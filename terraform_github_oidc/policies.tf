@@ -184,26 +184,33 @@ resource "aws_iam_policy" "github_oidc_custom_policy" {
       {
         Sid = "KMSPermissions"
 
-        Effect = "Allow"
+        
+  "Effect": "Allow",
+  "Action": [
+    "kms:CreateKey",
+    "kms:DescribeKey",
+    "kms:GetKeyPolicy",
+    "kms:PutKeyPolicy",
+    "kms:GetKeyRotationStatus",
+    "kms:EnableKeyRotation",
+    "kms:DisableKeyRotation",
+    "kms:CreateAlias",
+    "kms:UpdateAlias",
+    "kms:DeleteAlias",
+    "kms:ListAliases",
+    "kms:TagResource",
+    "kms:UntagResource",
+    "kms:ListResourceTags",
+    "kms:ScheduleKeyDeletion",
+    "kms:CancelKeyDeletion",
+    "kms:ListKeys",
+    "kms:ListGrants",
+    "kms:CreateGrant",
+    "kms:RevokeGrant"
+  ],
+  "Resource": "*"
+}
 
-        Action = [
-
-          "kms:CreateKey",
-          "kms:DescribeKey",
-          "kms:ListKeys",
-          "kms:ListAliases",
-          "kms:CreateAlias",
-          "kms:UpdateAlias",
-          "kms:DeleteAlias",
-          "kms:GetKeyRotationStatus",
-          "kms:EnableKeyRotation",
-          "kms:PutKeyPolicy",
-          "kms:TagResource"
-
-        ]
-
-        Resource = "*"
-      },
 
       ##########################################
       # CloudWatch
