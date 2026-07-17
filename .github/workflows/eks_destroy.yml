@@ -19,7 +19,7 @@ jobs:
 
   terraform-destroy:
 
-    runs-on: self-hosted
+    runs-on: k8s
 
     environment: ${{ github.event.inputs.target_env }}
 
