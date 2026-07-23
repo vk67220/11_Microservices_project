@@ -67,3 +67,13 @@ resource "aws_iam_user_policy_attachment" "iam_full_access" {
 
   policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
 }
+
+############################################
+# Amazon ECR Full Access
+############################################
+
+resource "aws_iam_user_policy_attachment" "ecr_full_access" {
+  user = aws_iam_user.app.name
+
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}

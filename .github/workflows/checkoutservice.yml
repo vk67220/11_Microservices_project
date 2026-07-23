@@ -14,7 +14,7 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: checkoutservice
-  ECR_REGISTRY: 242201296943.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REGISTRY: 302524629943.dkr.ecr.us-east-1.amazonaws.com
   IMAGE_NAME: checkoutservice
   YAML_FILE: kubernetes-files/checkoutservice.yaml
 
