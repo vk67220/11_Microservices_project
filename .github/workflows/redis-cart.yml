@@ -1,0 +1,41 @@
+name: Deploy Redis Cart
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: prod-eks
+
+jobs:
+  deploy-redis:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Deploy Redis
+        run: |
+          kubectl apply -f kubernetes-files/redis-cart.yaml
+
+      - name: Verify Redis
+        run: |
+          kubectl rollout status deployment/redis-cart -n online-boutique
+          kubectl get pods -n online-boutique
