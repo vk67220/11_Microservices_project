@@ -25,6 +25,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig \
