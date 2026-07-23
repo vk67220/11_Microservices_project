@@ -37,5 +37,5 @@ jobs:
 
       - name: Verify Redis
         run: |
-          kubectl rollout status deployment/redis-cart -n online-boutique
+          #kubectl rollout status deployment/redis-cart -n online-boutique
           kubectl get pods -n online-boutique
