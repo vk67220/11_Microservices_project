@@ -1,0 +1,44 @@
+name: Deploy Kubernetes Namespace
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: your-eks-cluster-name
+
+jobs:
+  deploy-namespace:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Verify Cluster
+        run: |
+          kubectl get nodes
+
+      - name: Deploy Namespace
+        run: |
+          kubectl apply -f kubernetes-files/istio/namespace.yaml
+
+      - name: Verify Namespace
+        run: |
+          kubectl get namespace online-boutique --show-labels
