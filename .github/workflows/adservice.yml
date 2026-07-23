@@ -72,7 +72,12 @@ jobs:
 
           git diff --cached --quiet || \
           git commit -m "Update adservice image to version ${{ github.event.inputs.image_tag }}"
-
+          
+      - name: Sync with Remote
+        run: |
+          git fetch origin
+          git pull --rebase origin main
+      
       - name: Push Changes
         run: |
           git push origin HEAD:main
