@@ -41,7 +41,7 @@ jobs:
 
       - name: Deploy Namespace
         run: |
-          kubectl apply -f kubernetes-files/istio/namespace.yaml
+          kubectl apply -f kubernetes-files/namespace.yaml
 
       - name: Verify Namespace
         run: |
