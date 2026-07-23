@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: frontend-destination
+  namespace: online-boutique
+spec:
+  host: frontend
+
+  trafficPolicy:
+
+    tls:
+      mode: ISTIO_MUTUAL
+
+    loadBalancer:
+      simple: LEAST_REQUEST
+
+    connectionPool:
+      tcp:
+        maxConnections: 100
+
+      http:
+        http1MaxPendingRequests: 100
+        maxRequestsPerConnection: 50
+        idleTimeout: 30s
+
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
