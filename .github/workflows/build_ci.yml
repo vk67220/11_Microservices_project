@@ -78,11 +78,6 @@ jobs:
             --image-ids imageTag=$IMAGE_TAG \
             --region $AWS_REGION
 
-      - name: Debug variables
-        run: |
-             echo "AWS_REGION=$AWS_REGION"
-             echo "CLUSTER_NAME=$EKS_CLUSTER_NAME"
-
       - name: Configure kubeconfig
         env:
           AWS_REGION: us-east-1
@@ -107,6 +102,17 @@ jobs:
             --query "cluster.name" \
             --output text
 
+      #- name: Deploy to Kubernetes
+       # env:
+        #  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         # REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
+          #NAMESPACE: online-boutique
+       # run: |
+        #  kubectl set image deployment/$REPOSITORY \
+         #   server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+          #  -n $NAMESPACE
+
       - name: Deploy to Kubernetes
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -114,9 +120,16 @@ jobs:
           IMAGE_TAG: ${{ inputs.image_tag }}
           NAMESPACE: online-boutique
         run: |
-          kubectl set image deployment/$REPOSITORY \
-            server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
-            -n $NAMESPACE
+          IMAGE=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+          echo "Deploying $REPOSITORY with image $IMAGE"
+
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" \
+            k8s/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
+
+          kubectl rollout status deployment/$REPOSITORY \
+            -n $NAMESPACE \
+            --timeout=300s
 
       - name: Verify Rollout
         env:
