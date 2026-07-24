@@ -48,7 +48,7 @@ spec:
         - name: FRONTEND_ADDR
           value: "frontend:80"
       containers:
-      - name: main
+      - name: server
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -56,7 +56,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: 242201296943.dkr.ecr.us-east-1.amazonaws.com/loadgenerator:1
+        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/loadgenerator:1
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
