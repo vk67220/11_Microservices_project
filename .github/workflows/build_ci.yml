@@ -120,16 +120,15 @@ jobs:
           IMAGE_TAG: ${{ inputs.image_tag }}
           NAMESPACE: online-boutique
         run: |
-          IMAGE=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+          kubectl apply -f kubernetes-files/${REPOSITORY}.yaml -n $NAMESPACE
 
-          echo "Deploying $REPOSITORY with image $IMAGE"
+          kubectl set image deployment/${REPOSITORY} \
+          server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+          -n $NAMESPACE
 
-          sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" \
-            kubernetes-files/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
-
-          kubectl rollout status deployment/$REPOSITORY \
-            -n $NAMESPACE \
-            --timeout=300s
+          kubectl rollout status deployment/${REPOSITORY} \
+          -n $NAMESPACE \
+          --timeout=300s
 
       - name: Verify Rollout
         env:
