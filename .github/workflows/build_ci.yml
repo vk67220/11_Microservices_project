@@ -53,18 +53,47 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Debug Repository Structure
+        env:
+          REPOSITORY: ${{ inputs.service }}
+        run: |
+          echo "Current Directory:"
+          pwd
+
+          echo "Repository Structure:"
+          ls -R
+
+          echo "Files under ./src/${REPOSITORY}:"
+          ls -R ./src/${REPOSITORY} || true
+
+          echo "Searching Dockerfile..."
+          find ./src/${REPOSITORY} -name Dockerfile
+
       - name: Build, Tag and Push Docker Image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.service }}
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          echo "Building Docker image..."
-          docker build \
-            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-            ./src/${REPOSITORY}
+          echo "Searching for Dockerfile..."
 
-          echo "Pushing Docker image..."
+          DOCKERFILE=$(find ./src/${REPOSITORY} -name Dockerfile | head -1)
+
+          if [ -z "$DOCKERFILE" ]; then
+            echo "ERROR: Dockerfile not found for ${REPOSITORY}"
+            exit 1
+          fi
+
+          BUILD_CONTEXT=$(dirname "$DOCKERFILE")
+
+          echo "Dockerfile : $DOCKERFILE"
+          echo "Context    : $BUILD_CONTEXT"
+
+          docker build \
+            -f "$DOCKERFILE" \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            "$BUILD_CONTEXT"
+
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Verify ECR Image
@@ -102,17 +131,6 @@ jobs:
             --query "cluster.name" \
             --output text
 
-      #- name: Deploy to Kubernetes
-       # env:
-        #  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-         # REPOSITORY: ${{ inputs.service }}
-          #IMAGE_TAG: ${{ inputs.image_tag }}
-          #NAMESPACE: online-boutique
-       # run: |
-        #  kubectl set image deployment/$REPOSITORY \
-         #   server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
-          #  -n $NAMESPACE
-
       - name: Deploy to Kubernetes
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -123,12 +141,12 @@ jobs:
           kubectl apply -f kubernetes-files/${REPOSITORY}.yaml -n $NAMESPACE
 
           kubectl set image deployment/${REPOSITORY} \
-          server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
-          -n $NAMESPACE
+            server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -n $NAMESPACE
 
           kubectl rollout status deployment/${REPOSITORY} \
-          -n $NAMESPACE \
-          --timeout=300s
+            -n $NAMESPACE \
+            --timeout=300s
 
       - name: Verify Rollout
         env:
