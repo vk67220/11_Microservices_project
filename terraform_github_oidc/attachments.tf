@@ -85,3 +85,14 @@ resource "aws_iam_role_policy_attachment" "custom_policy" {
   policy_arn = aws_iam_policy.github_oidc_custom_policy.arn
 
 }
+
+############################################
+# AmazonEC2ContainerRegistryPowerUser
+############################################
+
+resource "aws_iam_role_policy_attachment" "ecr" {
+
+  role       = aws_iam_role.github_oidc_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+
+}
