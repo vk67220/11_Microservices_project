@@ -1,0 +1,151 @@
+name: Online Boutique Pipeline (Local + ECR Push + EKS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Select Microservice
+        required: true
+        type: choice
+        options:
+          - adservice
+          - cartservice
+          - checkoutservice
+          - currencyservice
+          - emailservice
+          - frontend
+          - loadgenerator
+          - paymentservice
+          - productcatalogservice
+          - recommendationservice
+          - shippingservice
+
+      image_tag:
+        description: Docker Image Tag
+        required: true
+        default: latest
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::302524629943:role/GitHubActionsOIDCRole
+          aws-region: us-east-1
+          role-session-name: GitHubActionsSession
+
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag and Push Docker Image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          echo "Building Docker image..."
+          docker build \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            ./src/${REPOSITORY}
+
+          echo "Pushing Docker image..."
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      - name: Verify ECR Image
+        env:
+          AWS_REGION: us-east-1
+          REPOSITORY: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          aws ecr describe-images \
+            --repository-name $REPOSITORY \
+            --image-ids imageTag=$IMAGE_TAG \
+            --region $AWS_REGION
+
+      - name: Configure kubeconfig
+        env:
+          AWS_REGION: us-east-1
+          CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+          kubectl config current-context
+          kubectl cluster-info
+
+      - name: Verify EKS Cluster
+        env:
+          CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+        run: |
+          kubectl get nodes -o wide
+          kubectl get namespaces
+
+          aws eks describe-cluster \
+            --name $CLUSTER_NAME \
+            --query "cluster.name" \
+            --output text
+
+      - name: Deploy to Kubernetes
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          NAMESPACE: online-boutique
+        run: |
+          kubectl set image deployment/$REPOSITORY \
+            server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -n $NAMESPACE
+
+      - name: Verify Rollout
+        env:
+          DEPLOYMENT_NAME: ${{ inputs.service }}
+          NAMESPACE: online-boutique
+        run: |
+          kubectl rollout status deployment/$DEPLOYMENT_NAME \
+            -n $NAMESPACE \
+            --timeout=300s
+
+          kubectl rollout history deployment/$DEPLOYMENT_NAME \
+            -n $NAMESPACE
+
+      - name: Verify Pods
+        env:
+          DEPLOYMENT_NAME: ${{ inputs.service }}
+          NAMESPACE: online-boutique
+        run: |
+          kubectl get pods -n $NAMESPACE
+
+          kubectl get pods \
+            -n $NAMESPACE \
+            -l app=$DEPLOYMENT_NAME \
+            -o wide
+
+          kubectl describe deployment $DEPLOYMENT_NAME \
+            -n $NAMESPACE
+
+      - name: Cleanup Docker Images
+        if: always()
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          docker rmi $REGISTRY/$REPOSITORY:$IMAGE_TAG || true
+          docker image prune -af || true
