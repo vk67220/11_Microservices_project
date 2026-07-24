@@ -29,7 +29,8 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/productcatalogservice:latest
+       #image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/productcatalogservice:latest
+        image: IMAGE_PLACEHOLDER
         ports:
         - containerPort: 3550
         env:
