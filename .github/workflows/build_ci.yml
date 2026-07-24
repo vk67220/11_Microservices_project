@@ -78,6 +78,11 @@ jobs:
             --image-ids imageTag=$IMAGE_TAG \
             --region $AWS_REGION
 
+      - name: Debug variables
+        run: |
+             echo "AWS_REGION=$AWS_REGION"
+             echo "CLUSTER_NAME=$CLUSTER_NAME"
+
       - name: Configure kubeconfig
         env:
           AWS_REGION: us-east-1
