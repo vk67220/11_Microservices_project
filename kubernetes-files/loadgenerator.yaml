@@ -5,27 +5,33 @@ metadata:
   name: loadgenerator
   namespace: online-boutique
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: loadgenerator
-  replicas: 1
+
   template:
     metadata:
       labels:
         app: loadgenerator
       annotations:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
+
     spec:
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
       restartPolicy: Always
+
       securityContext:
         fsGroup: 1000
         runAsGroup: 1000
         runAsNonRoot: true
         runAsUser: 1000
+
       initContainers:
-      - command:
+      - name: frontend-check
+        image: IMAGE_PLACEHOLDER
+        command:
         - /bin/sh
         - -exc
         - |
@@ -35,33 +41,29 @@ spec:
               echo "Error: Could not reach frontend - Status code: ${STATUSCODE}"
               exit 1
           fi
-        name: frontend-check
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-        image:  302524629943.dkr.ecr.us-east-1.amazonaws.com/loadgenerator:1
+
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
-      containers:
-      - name: server
+
         securityContext:
           allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/loadgenerator:1
+
+      containers:
+      - name: server
+        image: IMAGE_PLACEHOLDER
+
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
         - name: USERS
           value: "10"
+
         resources:
           requests:
             cpu: 300m
@@ -69,3 +71,11 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
