@@ -29,7 +29,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/productcatalogservice:1
+        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/productcatalogservice:latest
         ports:
         - containerPort: 3550
         env:
