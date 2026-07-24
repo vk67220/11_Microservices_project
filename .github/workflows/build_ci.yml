@@ -125,7 +125,7 @@ jobs:
           echo "Deploying $REPOSITORY with image $IMAGE"
 
           sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" \
-            k8s/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
+            kubernetes-files/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
 
           kubectl rollout status deployment/$REPOSITORY \
             -n $NAMESPACE \
