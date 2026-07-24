@@ -131,22 +131,37 @@ jobs:
             --query "cluster.name" \
             --output text
 
-      - name: Deploy to Kubernetes
+      #- name: Deploy to Kubernetes
+       # env:
+        #  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         # REPOSITORY: ${{ inputs.service }}
+         # IMAGE_TAG: ${{ inputs.image_tag }}
+         # NAMESPACE: online-boutique
+       # run: |
+        #  kubectl apply -f kubernetes-files/${REPOSITORY}.yaml -n $NAMESPACE
+
+         # kubectl set image deployment/${REPOSITORY} \
+          #  server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+           # -n $NAMESPACE
+
+         # kubectl rollout status deployment/${REPOSITORY} \
+          #  -n $NAMESPACE \
+           # --timeout=300s
+      - name: Deploy to EKS
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.service }}
           IMAGE_TAG: ${{ inputs.image_tag }}
           NAMESPACE: online-boutique
         run: |
-          kubectl apply -f kubernetes-files/${REPOSITORY}.yaml -n $NAMESPACE
+          IMAGE="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
 
-          kubectl set image deployment/${REPOSITORY} \
-            server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
-            -n $NAMESPACE
+          sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" \
+          kubernetes-files/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
 
           kubectl rollout status deployment/${REPOSITORY} \
-            -n $NAMESPACE \
-            --timeout=300s
+          -n $NAMESPACE \
+          --timeout=300s
 
       - name: Verify Rollout
         env:
