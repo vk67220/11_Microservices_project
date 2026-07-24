@@ -28,7 +28,8 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/shippingservice:3
+        #image: 302524629943.dkr.ecr.us-east-1.amazonaws.com/shippingservice:3
+        image: IMAGE_PLACEHOLDER
         ports:
         - containerPort: 50051
         env:
@@ -45,7 +46,7 @@ spec:
             port: 50051
         resources:
           requests:
-            cpu: 100m
+            cpu: 25m
             memory: 64Mi
           limits:
             cpu: 200m
