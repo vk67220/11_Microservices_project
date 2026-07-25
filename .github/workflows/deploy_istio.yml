@@ -60,11 +60,11 @@ jobs:
 
       - name: Apply Istio Resources
         run: |
-          kubectl apply -f istio/gateway.yaml
-          kubectl apply -f istio/destinationrule.yaml
-          kubectl apply -f istio/virtualservice.yaml
-          kubectl apply -f istio/authorizationpolicy.yaml
-          kubectl apply -f istio/peerauthentication.yaml
+          kubectl apply -f kubernetes-files/istio/gateway.yaml
+          kubectl apply -f kubernetes-files/istio/destinationrule.yaml
+          kubectl apply -f kubernetes-files/istio/virtualservice.yaml
+          kubectl apply -f kubernetes-files/istio/authorizationpolicy.yaml
+          kubectl apply -f kubernetes-files/istio/peerauthentication.yaml
 
       - name: Restart Application
         run: |
