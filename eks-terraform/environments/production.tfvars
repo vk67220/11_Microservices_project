@@ -45,7 +45,7 @@ cluster_version = "1.33"
 ############################################
 
 node_instance_types = [
-  "m7i-flex.large"
+  "t3.large"
 ]
 
 node_min_size     = 2
