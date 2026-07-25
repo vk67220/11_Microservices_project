@@ -20,6 +20,11 @@ on:
           - recommendationservice
           - shippingservice
 
+      #image_tag:
+       # description: Docker Image Tag
+        #required: true
+        #default: latest
+
 permissions:
   id-token: write
   contents: read
@@ -68,6 +73,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
           IMAGE_TAG: ${{ github.run_number }}
         run: |
           echo "Searching for Dockerfile..."
@@ -84,19 +90,27 @@ jobs:
           echo "Dockerfile : $DOCKERFILE"
           echo "Context    : $BUILD_CONTEXT"
 
-          docker build \
-            -f "$DOCKERFILE" \
-            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-            -t $REGISTRY/$REPOSITORY:latest \
-            "$BUILD_CONTEXT"
+          #docker build \
+           # -f "$DOCKERFILE" \
+           #-t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+           # "$BUILD_CONTEXT"
 
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:latest
+         # docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+         docker build \
+  -f "$DOCKERFILE" \
+  -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+  -t $REGISTRY/$REPOSITORY:latest \
+  "$BUILD_CONTEXT"
+
+docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+docker push $REGISTRY/$REPOSITORY:latest
 
       - name: Verify ECR Image
         env:
           AWS_REGION: us-east-1
           REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
           IMAGE_TAG: ${{ github.run_number }}
         run: |
           aws ecr describe-images \
@@ -128,22 +142,38 @@ jobs:
             --query "cluster.name" \
             --output text
 
+      #- name: Deploy to Kubernetes
+       # env:
+        #  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         # REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
+          #NAMESPACE: online-boutique
+        #run: |
+         # kubectl apply -f kubernetes-files/${REPOSITORY}.yaml -n $NAMESPACE
+
+          #kubectl set image deployment/${REPOSITORY} \
+           # server=$REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            #-n $NAMESPACE
+
+          #kubectl rollout status deployment/${REPOSITORY} \
+           # -n $NAMESPACE \
+            #--timeout=300s
       - name: Deploy to EKS
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
           IMAGE_TAG: ${{ github.run_number }}
           NAMESPACE: online-boutique
         run: |
           IMAGE="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
 
           sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" \
-            kubernetes-files/${REPOSITORY}.yaml | \
-            kubectl apply -n $NAMESPACE -f -
+          kubernetes-files/${REPOSITORY}.yaml | kubectl apply -n $NAMESPACE -f -
 
           kubectl rollout status deployment/${REPOSITORY} \
-            -n $NAMESPACE \
-            --timeout=300s
+          -n $NAMESPACE \
+          --timeout=300s
 
       - name: Verify Rollout
         env:
@@ -177,8 +207,9 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.service }}
+          #IMAGE_TAG: ${{ inputs.image_tag }}
           IMAGE_TAG: ${{ github.run_number }}
         run: |
           docker rmi $REGISTRY/$REPOSITORY:$IMAGE_TAG || true
-          docker rmi $REGISTRY/$REPOSITORY:latest || true
-          docker image prune -af || true
+docker rmi $REGISTRY/$REPOSITORY:latest || true
+docker image prune -af || true
