@@ -1,0 +1,91 @@
+name: Deploy Istio Configuration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-istio:
+    name: Deploy Istio Resources
+    runs-on: self-hosted
+
+    env:
+      AWS_REGION: us-east-1
+      NAMESPACE: online-boutique
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::302524629943:role/github-oidc-selfhosted-role
+          aws-region: us-east-1
+          role-session-name: GitHubActionsSession
+
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      - name: Configure kubeconfig
+        env:
+          CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+          kubectl config current-context
+          kubectl cluster-info
+
+      - name: Verify Cluster
+        run: |
+          kubectl get nodes
+          kubectl get ns
+
+      - name: Verify Istio Installation
+        run: |
+          kubectl get ns istio-system
+          kubectl get pods -n istio-system
+
+      - name: Enable Sidecar Injection
+        run: |
+          kubectl label namespace $NAMESPACE \
+            istio-injection=enabled \
+            --overwrite
+
+      - name: Apply Istio Resources
+        run: |
+          kubectl apply -f istio/gateway.yaml
+          kubectl apply -f istio/destinationrule.yaml
+          kubectl apply -f istio/virtualservice.yaml
+          kubectl apply -f istio/authorizationpolicy.yaml
+          kubectl apply -f istio/peerauthentication.yaml
+
+      - name: Restart Application
+        run: |
+          kubectl rollout restart deployment -n $NAMESPACE
+
+      - name: Wait for Rollout
+        run: |
+          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=300s
+
+      - name: Verify Istio Resources
+        run: |
+          kubectl get gateway -A
+          kubectl get virtualservice -A
+          kubectl get destinationrule -A
+          kubectl get authorizationpolicy -A
+          kubectl get peerauthentication -A
+
+      - name: Verify Pods
+        run: |
+          kubectl get pods -n $NAMESPACE
+
+      - name: Verify Ingress Gateway
+        run: |
+          kubectl get svc istio-ingressgateway -n istio-system
